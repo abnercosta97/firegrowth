@@ -1,0 +1,47 @@
+# firegrowth
+
+Biblioteca modular para construir e avaliar previsões da taxa de crescimento da extensão espacial observada de eventos de fogo DescrEVE.
+
+O projeto é uma implementação inicial do contrato científico do estudo CAP-408-3 no MATOPIBA. O pacote não redistribui dados operacionais, credenciais ou arquivos meteorológicos. Ele trabalha com tabelas derivadas versionadas e permite que fontes externas sejam conectadas por adaptadores.
+
+## Escopo v0.1
+
+- alvo contínuo em hectares/dia, derivado de geometrias cumulativas;
+- baselines zero, último valor e média móvel;
+- divisão temporal por blocos, sem aleatorização de dias do mesmo evento;
+- MAE, RMSE e viés;
+- configuração declarativa em YAML/JSON;
+- manifesto de execução com versão dos dados e parâmetros.
+
+## Instalação de desenvolvimento
+
+```bash
+uv sync
+uv run pytest
+uv run firegrowth --help
+```
+
+Para validar o release local do dataset:
+
+```bash
+uv run firegrowth validate /caminho/matopiba-fire-events/release
+```
+
+O comando verifica tabelas obrigatórias, chaves de eventos e frentes órfãs.
+
+O pacote usa `src/` layout, `uv.lock`, testes científicos e configuração explícita, seguindo a aula “Da ideia ao PyPI — Benchmarks de nowcasting”.
+
+## Dados esperados
+
+O contrato público está em `docs/data_contract.md`. O dataset de eventos deve conter eventos, frentes, geometrias, datas UTC, chaves estáveis, cobertura e manifesto. Meteorologia SAMeT/MERGE será obtida separadamente via STAC e registrada no manifesto; nenhum segredo deve entrar no repositório.
+
+## FAIR e citação
+
+Cada experimento deve guardar `configs/`, a revisão do dataset, hashes dos arquivos, ambiente e resultados. Releases deverão receber tag SemVer, DOI via Zenodo e referência em `CITATION.cff`.
+
+## Estado do projeto
+
+O pacote está em desenvolvimento (`0.1.0`). A leitura e validação do dataset e
+as funções básicas de alvo, geometria, partição temporal e métricas estão
+implementadas. A construção completa de atributos meteorológicos e os modelos
+de produção ainda são etapas futuras; nenhum resultado científico é incluído.

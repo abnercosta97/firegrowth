@@ -1,0 +1,15 @@
+site_name: firegrowth
+site_description: Benchmark reproduzível para crescimento observado de eventos de fogo
+site_url: https://abnercosta97.github.io/firegrowth/
+repo_url: https://github.com/abnercosta97/firegrowth
+theme:
+  name: material
+  language: pt
+  palette:
+    primary: blue
+nav:
+  - Início: index.md
+  - Guia rápido: quickstart.md
+  - Protocolo: protocol.md
+  - Contrato de dados: data_contract.md
+  - API: api.md

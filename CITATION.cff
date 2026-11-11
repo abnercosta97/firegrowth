@@ -1,0 +1,10 @@
+cff-version: 1.2.0
+title: "firegrowth: benchmark de crescimento observado de eventos de fogo"
+type: software
+version: 0.1.0
+date-released: 2026-11-09
+license: BSD-3-Clause
+message: "If you use this software, please cite the repository and the associated dataset release."
+authors:
+  - family-names: "Projeto CAP-408-3"
+    given-names: ""
