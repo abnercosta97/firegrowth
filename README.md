@@ -29,6 +29,23 @@ uv run firegrowth validate /caminho/matopiba-fire-events/release
 
 O comando verifica tabelas obrigatórias, chaves de eventos e frentes órfãs.
 
+Para preparar e executar o benchmark mínimo:
+
+```bash
+uv run firegrowth prepare \
+  /mnt/dados/publicacoes/matopiba-fire-events/release \
+  /mnt/dados/publicacoes/matopiba-fire-events/derived/benchmark-v0.1.0
+
+uv run firegrowth run \
+  /mnt/dados/publicacoes/matopiba-fire-events/release \
+  /mnt/dados/publicacoes/matopiba-fire-events/derived/benchmark-v0.1.0 \
+  --horizons 1,3
+```
+
+O resultado contém áreas cumulativas por evento–dia, tabelas supervisionadas,
+previsões dos três baselines, métricas CSV, exclusões e manifesto com a revisão
+do dataset.
+
 O pacote usa `src/` layout, `uv.lock`, testes científicos e configuração explícita, seguindo a aula “Da ideia ao PyPI — Benchmarks de nowcasting”.
 
 ## Dados esperados

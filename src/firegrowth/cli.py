@@ -5,6 +5,7 @@ import json
 
 from . import __version__
 from .data import validate_release
+from .pipeline import prepare_event_daily, run_benchmark
 
 
 def main() -> None:
@@ -13,11 +14,23 @@ def main() -> None:
     sub = parser.add_subparsers(dest="command")
     check = sub.add_parser("validate", help="validate a local dataset release")
     check.add_argument("root")
+    prepare = sub.add_parser("prepare", help="build event-day cumulative areas")
+    prepare.add_argument("dataset")
+    prepare.add_argument("output")
+    run = sub.add_parser("run", help="run the baseline benchmark")
+    run.add_argument("dataset")
+    run.add_argument("output")
+    run.add_argument("--horizons", default="1,3")
     args = parser.parse_args()
     if args.command == "validate":
         result = validate_release(args.root)
         print(json.dumps(result, indent=2, ensure_ascii=False))
         if not result["valid"]:
             raise SystemExit(1)
+    elif args.command == "prepare":
+        print(json.dumps(prepare_event_daily(args.dataset, args.output), indent=2))
+    elif args.command == "run":
+        horizons = [int(value) for value in args.horizons.split(",")]
+        print(json.dumps(run_benchmark(args.dataset, args.output, horizons), indent=2))
     else:
         parser.print_help()
