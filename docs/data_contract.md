@@ -20,6 +20,12 @@ Eventos encerrados, absorvidos e fora do estado operacional atual devem ser incl
 
 `features.parquet`, `targets.parquet` e `splits.parquet` devem manter `event_id`, `reference_date`, `horizon_days`, `dataset_revision`, `feature_cutoff` e `eligibility_reason`. O alvo principal é incremento de área da união cumulativa, em hectares por dia; áreas finais e meteorologia posterior são proibidas como preditores.
 
+As análises descritivas podem produzir uma camada derivada separada, sem
+alterar a revisão observacional: `front_daily_union.parquet`,
+`event_summary.parquet` e `reconstruction_audit.parquet`. Essa camada deve
+registrar a regra de reconstrução, o CRS, a revisão do dataset e a diferença
+entre a área reconstruída e `delta_area`.
+
 ## Proveniência meteorológica
 
 Para cada variável, registrar coleção STAC, item, asset, URL, checksum quando possível, janela temporal, unidade, resolução, método de extração espacial e latência conhecida. MERGE deve respeitar a janela D−1 13 UTC–D 12 UTC. Valores ausentes não são zero.

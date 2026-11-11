@@ -10,7 +10,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import yaml
-from shapely import from_wkt
+from shapely import from_wkt, to_wkt
 from shapely.ops import transform, unary_union
 
 from .data import read_table, validate_release
@@ -56,9 +56,7 @@ def prepare_event_daily(dataset_root: str | Path, output_root: str | Path) -> di
             continue
         daily_union = unary_union(geometries)
         previous = (
-            rows[-1]["_cumulative_geometry"]
-            if rows and rows[-1]["event_id"] == event_id
-            else None
+            rows[-1]["_cumulative_geometry"] if rows and rows[-1]["event_id"] == event_id else None
         )
         cumulative = daily_union if previous is None else unary_union([previous, daily_union])
         projected = transform(_TO_EQUAL_AREA, cumulative)
@@ -67,6 +65,7 @@ def prepare_event_daily(dataset_root: str | Path, output_root: str | Path) -> di
                 "event_id": event_id,
                 "observation_date": day.date(),
                 "front_count": int(len(group)),
+                "daily_union_wkt": to_wkt(daily_union, rounding_precision=8),
                 "cumulative_area_ha": float(projected.area / 10_000),
                 "has_front": True,
                 "_cumulative_geometry": cumulative,
@@ -196,15 +195,21 @@ def run_benchmark(
                 all_metrics.append(
                     {"horizon_days": horizon, "partition": name, "model": model, **scores}
                 )
-                all_predictions.append(pd.DataFrame({
-                    "event_id": eligible["event_id"].to_numpy(),
-                    "reference_date": eligible["reference_date"].dt.date,
-                    "horizon_days": horizon,
-                    "partition": name,
-                    "model": model,
-                    "observed_growth_ha_day": eligible["target_growth_ha_day"].to_numpy(float),
-                    "predicted_growth_ha_day": prediction,
-                }))
+                all_predictions.append(
+                    pd.DataFrame(
+                        {
+                            "event_id": eligible["event_id"].to_numpy(),
+                            "reference_date": eligible["reference_date"].dt.date,
+                            "horizon_days": horizon,
+                            "partition": name,
+                            "model": model,
+                            "observed_growth_ha_day": eligible["target_growth_ha_day"].to_numpy(
+                                float
+                            ),
+                            "predicted_growth_ha_day": prediction,
+                        }
+                    )
+                )
     metrics = pd.DataFrame(all_metrics)
     predictions = (
         pd.concat(all_predictions, ignore_index=True) if all_predictions else pd.DataFrame()

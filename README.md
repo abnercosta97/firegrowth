@@ -62,6 +62,13 @@ lacunas, áreas, crescimento reconstruído, elegibilidade dos horizontes,
 partições temporais, cobertura e figuras. A meteorologia não é carregada nessa
 etapa.
 
+Os derivados preservam a separação entre a fonte observacional e a análise:
+`front_daily_union.parquet` contém a união diária em WKT e a área cumulativa;
+`event_summary.parquet` contém duração do catálogo, intervalo observado,
+faixas de duração, tipos e estatísticas por evento; e
+`reconstruction_audit.parquet` compara os incrementos reconstruídos com o
+campo original `delta_area`.
+
 O pacote usa `src/` layout, `uv.lock`, testes científicos e configuração explícita, seguindo a aula “Da ideia ao PyPI — Benchmarks de nowcasting”.
 
 ## Dados esperados

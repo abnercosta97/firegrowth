@@ -67,6 +67,13 @@ def build_event_summary(
     daily_stats["calendar_duration_days"] = (
         daily_stats["last_observation"] - daily_stats["first_observation"]
     ).dt.days + 1
+    daily_stats["observed_span_days"] = daily_stats["calendar_duration_days"]
+    daily_stats["duration_bin"] = pd.cut(
+        daily_stats["observed_span_days"],
+        bins=[0, 1, 2, 3, 7, 14, 30, 60, 90, np.inf],
+        labels=["1", "2", "3", "4–7", "8–14", "15–30", "31–60", "61–90", ">90"],
+        include_lowest=True,
+    ).astype(str)
     daily_stats["total_growth_ha"] = daily_stats["final_area_ha"] - daily_stats["initial_area_ha"]
     front_stats = (
         fronts.groupby("event_id")
@@ -100,7 +107,49 @@ def build_event_summary(
     ].copy()
     result = event_info.merge(daily_stats, on="event_id", how="left")
     result = result.merge(front_stats, on="event_id", how="left")
-    return result.merge(sensor_stats, on="event_id", how="left")
+    result = result.merge(sensor_stats, on="event_id", how="left")
+    result["duration_catalog_days"] = (
+        pd.to_datetime(result["date_max_utc"]) - pd.to_datetime(result["date_min_utc"])
+    ).dt.days + 1
+    return result
+
+
+def build_reconstruction_audit(fronts: pd.DataFrame, event_daily: pd.DataFrame) -> pd.DataFrame:
+    """Compare source daily increments with the reconstructed cumulative union."""
+    source = fronts.copy()
+    source["observation_date"] = pd.to_datetime(source["observation_date_utc"]).dt.date
+    original = source.groupby(["event_id", "observation_date"], as_index=False).agg(
+        source_front_count=("front_id", "nunique"),
+        delta_area_original_ha=("delta_area", "sum"),
+    )
+    reconstructed = event_daily.copy()
+    reconstructed["observation_date"] = pd.to_datetime(reconstructed["observation_date"]).dt.date
+    reconstructed = reconstructed.sort_values(["event_id", "observation_date"])
+    reconstructed["area_increment_ha"] = reconstructed.groupby("event_id")[
+        "cumulative_area_ha"
+    ].diff()
+    reconstructed["gap_days"] = (
+        reconstructed.groupby("event_id")["observation_date"]
+        .diff()
+        .apply(lambda value: value.days if pd.notna(value) else np.nan)
+    )
+    audit = original.merge(
+        reconstructed[
+            [
+                "event_id",
+                "observation_date",
+                "front_count",
+                "cumulative_area_ha",
+                "area_increment_ha",
+                "gap_days",
+            ]
+        ],
+        on=["event_id", "observation_date"],
+        how="outer",
+    )
+    audit["delta_difference_ha"] = audit["area_increment_ha"] - audit["delta_area_original_ha"]
+    audit["reconstruction_rule"] = "daily_union_epsg6933_cumulative_union"
+    return audit
 
 
 def _write_csv(frame: pd.DataFrame, path: Path) -> None:
@@ -160,6 +209,22 @@ def _figures(
     fig.savefig(out / "target_eligibility.png", dpi=160)
     plt.close(fig)
 
+    type_counts = event_summary["type_label"].value_counts().sort_values()
+    fig, ax = plt.subplots(figsize=(8, 4))
+    type_counts.plot(kind="barh", ax=ax)
+    ax.set(title="Eventos por tipo", xlabel="Eventos", ylabel="Tipo")
+    fig.tight_layout()
+    fig.savefig(out / "events_by_type.png", dpi=160)
+    plt.close(fig)
+
+    duration_counts = event_summary["duration_bin"].value_counts().sort_index()
+    fig, ax = plt.subplots(figsize=(8, 4))
+    duration_counts.plot(kind="bar", ax=ax)
+    ax.set(title="Eventos por faixa de duração observada", xlabel="Dias", ylabel="Eventos")
+    fig.tight_layout()
+    fig.savefig(out / "events_by_duration_bin.png", dpi=160)
+    plt.close(fig)
+
 
 def run_exploratory_analysis(
     dataset_root: str | Path, benchmark_root: str | Path, report_root: str | Path
@@ -184,6 +249,21 @@ def run_exploratory_analysis(
         != pd.to_datetime(summary["last_observation"]).dt.year
     )
     _write_parquet(summary, report / "event_summary.parquet")
+    _write_parquet(
+        event_daily[
+            [
+                "event_id",
+                "observation_date",
+                "front_count",
+                "daily_union_wkt",
+                "cumulative_area_ha",
+            ]
+        ],
+        report / "front_daily_union.parquet",
+    )
+    _write_parquet(
+        build_reconstruction_audit(fronts, event_daily), report / "reconstruction_audit.parquet"
+    )
     for column in ["status_label", "type_label", "start_year", "start_month"]:
         _write_csv(
             summary[column]
@@ -194,6 +274,40 @@ def run_exploratory_analysis(
         )
     _write_csv(
         summary.describe(include="all").transpose().reset_index(), report / "event_statistics.csv"
+    )
+    _write_csv(
+        summary.groupby(["type_code", "type_label"], dropna=False)
+        .agg(
+            events=("event_id", "nunique"),
+            mean_duration_days=("observed_span_days", "mean"),
+            median_duration_days=("observed_span_days", "median"),
+            mean_fronts=("front_count", "mean"),
+            median_fronts=("front_count", "median"),
+            median_final_area_ha=("final_area_ha", "median"),
+            median_max_growth_ha_day=("max_growth_ha_day", "median"),
+        )
+        .reset_index(),
+        report / "type_statistics.csv",
+    )
+    _write_csv(
+        summary.groupby("duration_bin", dropna=False)
+        .agg(
+            events=("event_id", "nunique"),
+            mean_duration_days=("observed_span_days", "mean"),
+            median_duration_days=("observed_span_days", "median"),
+            mean_fronts=("front_count", "mean"),
+            median_final_area_ha=("final_area_ha", "median"),
+            median_max_growth_ha_day=("max_growth_ha_day", "median"),
+        )
+        .reset_index(),
+        report / "duration_bin_statistics.csv",
+    )
+    _write_csv(
+        summary.groupby(["type_label", "duration_bin"], dropna=False)
+        .size()
+        .rename("events")
+        .reset_index(),
+        report / "type_duration_statistics.csv",
     )
     _write_csv(
         fronts.assign(observation_date=pd.to_datetime(fronts["observation_date_utc"]).dt.date)
@@ -295,6 +409,10 @@ def run_exploratory_analysis(
             "A ausência de uma frente não foi convertida automaticamente em crescimento zero. "
             "A tabela de detecções não foi agregada por evento porque o vínculo histórico "
             "foco–evento/frente não está disponível."
+        ),
+        (
+            "A duração observada é calculada a partir da primeira e da última frente; "
+            "a duração do catálogo é mantida separadamente."
         ),
         "",
         "## Arquivos",
