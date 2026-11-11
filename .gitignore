@@ -6,4 +6,6 @@ data/raw/
 data/interim/
 data/processed/
 results/
+dist/
+build/
 .env
