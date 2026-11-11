@@ -10,6 +10,12 @@
 
 O resultado é crescimento observado do produto DescrEVE, não área queimada física nem velocidade de propagação de chamas.
 
+Antes do treinamento, `firegrowth analyze` gera a caracterização descritiva
+dos eventos sem meteorologia: estrutura temporal, duração, lacunas, áreas,
+sensores, detecções, crescimento geométrico e disponibilidade dos horizontes.
+Eventos sem data futura exata ou que cruzam partições são contabilizados como
+exclusões; não são convertidos silenciosamente em crescimento zero.
+
 ## Dados publicados
 
 O benchmark deve usar uma revisão imutável do dataset:

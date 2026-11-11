@@ -46,6 +46,22 @@ O resultado contém áreas cumulativas por evento–dia, tabelas supervisionadas
 previsões dos três baselines, métricas CSV, exclusões e manifesto com a revisão
 do dataset.
 
+Para gerar as estatísticas exploratórias sem meteorologia, instale o extra de
+análise e execute:
+
+```bash
+uv sync --extra analysis
+uv run firegrowth analyze \
+  /mnt/dados/publicacoes/matopiba-fire-events/release \
+  /mnt/dados/publicacoes/matopiba-fire-events/derived/benchmark-v0.1.0 \
+  /mnt/dados/publicacoes/matopiba-fire-events/reports/exploratory_events
+```
+
+O relatório inclui estatísticas de eventos, frentes, detecções, duração,
+lacunas, áreas, crescimento reconstruído, elegibilidade dos horizontes,
+partições temporais, cobertura e figuras. A meteorologia não é carregada nessa
+etapa.
+
 O pacote usa `src/` layout, `uv.lock`, testes científicos e configuração explícita, seguindo a aula “Da ideia ao PyPI — Benchmarks de nowcasting”.
 
 ## Dados esperados
