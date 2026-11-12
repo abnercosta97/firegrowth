@@ -16,6 +16,11 @@ sensores, detecções, crescimento geométrico e disponibilidade dos horizontes.
 Eventos sem data futura exata ou que cruzam partições são contabilizados como
 exclusões; não são convertidos silenciosamente em crescimento zero.
 
+`firegrowth multiday` gera uma análise derivada de eventos com pelo menos duas
+datas observadas, incluindo tabelas por tipo, faixas de duração, lacunas,
+coortes de histórico e partições temporais. Essa análise não altera o dataset
+observacional e não inclui meteorologia.
+
 ## Dados publicados
 
 O benchmark deve usar uma revisão imutável do dataset:

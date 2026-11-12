@@ -6,6 +6,7 @@ import json
 from . import __version__
 from .analysis import run_exploratory_analysis
 from .data import validate_release
+from .multiday import run_multiday_analysis
 from .pipeline import prepare_event_daily, run_benchmark
 
 
@@ -26,6 +27,10 @@ def main() -> None:
     analyze.add_argument("dataset")
     analyze.add_argument("benchmark")
     analyze.add_argument("report")
+    multiday = sub.add_parser("multiday", help="analyze multi-day event cohort")
+    multiday.add_argument("dataset")
+    multiday.add_argument("benchmark")
+    multiday.add_argument("report")
     args = parser.parse_args()
     if args.command == "validate":
         result = validate_release(args.root)
@@ -41,6 +46,13 @@ def main() -> None:
         print(
             json.dumps(
                 run_exploratory_analysis(args.dataset, args.benchmark, args.report),
+                indent=2,
+            )
+        )
+    elif args.command == "multiday":
+        print(
+            json.dumps(
+                run_multiday_analysis(args.dataset, args.benchmark, args.report),
                 indent=2,
             )
         )

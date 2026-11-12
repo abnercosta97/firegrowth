@@ -69,6 +69,18 @@ faixas de duração, tipos e estatísticas por evento; e
 `reconstruction_audit.parquet` compara os incrementos reconstruídos com o
 campo original `delta_area`.
 
+Para executar a análise específica da coorte multidiária:
+
+```bash
+uv run firegrowth multiday \
+  /mnt/dados/publicacoes/matopiba-fire-events/release \
+  /mnt/dados/publicacoes/matopiba-fire-events/derived/benchmark-v0.1.0 \
+  /mnt/dados/publicacoes/matopiba-fire-events/reports/multiday_analysis
+```
+
+O filtro retrospectivo é `observed_days >= 2`, calculado a partir das frentes.
+Ele não é usado como atributo futuro na tabela de alvos.
+
 O pacote usa `src/` layout, `uv.lock`, testes científicos e configuração explícita, seguindo a aula “Da ideia ao PyPI — Benchmarks de nowcasting”.
 
 ## Dados esperados
